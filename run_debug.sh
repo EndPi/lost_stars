@@ -1,0 +1,1 @@
+python3 main.py -d -p past_images -r recent_images
