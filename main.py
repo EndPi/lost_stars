@@ -83,7 +83,7 @@ def main() -> None:
             print(f'DEBUG: Config file read successfully!')
     print(f'INFO: Starting pair processing!')
     for i, pair in enumerate(image_pairs, start=1):
-        print(f"INFO: Processing Pair {i}...")
+        print(f"INFO: Processing pair {i}...")
         past, recent = pair['past_image'], pair['recent_image']
         
         crop_to_tiles(debug=DEBUG, image_path=Path.joinpath(PAST_IMAGES_PATH, past), tile_size=2048)
@@ -110,8 +110,8 @@ def main() -> None:
             if DEBUG:
                 print(f'DEBUG: Images {norm_past} and {norm_recent} inverted!')
             
-            past_spots, past_cords = find_brightest_spots((norm_past), 210)
-            recent_spots, recent_cords = find_brightest_spots((norm_recent), 210)
+            past_spots, past_cords = find_brightest_spots((norm_past), 200)
+            recent_spots, recent_cords = find_brightest_spots((norm_recent), 200)
 
             src_cords, trgt_cords = sort_corresponding_stars(debug=DEBUG, array1=past_cords, array2=recent_cords)
             if DEBUG:
@@ -121,16 +121,22 @@ def main() -> None:
                 if DEBUG:
                     print(f'DEBUG: Transformation found!')
             except aa.MaxIterError:
-                print(f'DEBUG: Transformation not found!')
-            transformed_past, footprint = aa.apply_transform(tform, norm_past, norm_recent)
-            print(f'INFO: Transformation applied!')
-
+                print(f'ERROR: Transformation not found!')
+            try:
+                transformed_past, footprint = aa.apply_transform(tform, norm_past, norm_recent)
+                if DEBUG:
+                    print(f'DEBUG: Transformation applied!')
+            except np.linalg.LinAlgError:
+                print(f'ERROR: Unable to apply transformation!')
+                
             # Make plots.
             print(f'INFO: Preparing plots!')
             tile_name = Path(past_tile_path).stem  
             prepare_fig(image1=past_spots, image2=recent_spots, image3=transformed_past, image4=footprint, tile_name=tile_name,save_path=pair_folder_path)      
             create_diff_map(image1=norm_past, image2=norm_recent, image3=transformed_past, tile_name=tile_name, save_path=diff_map_path) 
+        
     print(f'INFO: Done!')
+
 
 
 if __name__ == '__main__':

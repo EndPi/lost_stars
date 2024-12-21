@@ -6,7 +6,7 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageOps, ImageDraw, ImageFont
 from scipy.ndimage import label, binary_closing, find_objects, center_of_mass
 
 # Since we are dealing with big pictures :)
@@ -27,10 +27,14 @@ def crop_to_tiles(debug: bool, image_path: Path, tile_size: int) -> None:
     try:
         with Image.open(image_path.with_suffix(".tif")) as img:
             width, height = img.size    
+            # Calculate the number of tiles (rounded up)
+            x_tiles = int(np.ceil(width / tile_size))
+            y_tiles = int(np.ceil(height / tile_size))
 
-            # Calculate the number of tiles along each dimension.
-            x_tiles = width // tile_size
-            y_tiles = height // tile_size
+            # Resize image to ensure full coverage
+            new_width = x_tiles * tile_size
+            new_height = y_tiles * tile_size
+            img_resized = img.resize((new_width, new_height), Image.LANCZOS)
 
             # Create the folder for tiles.
             tile_folder = image_path.parent / image_path
@@ -47,7 +51,7 @@ def crop_to_tiles(debug: bool, image_path: Path, tile_size: int) -> None:
                     lower = upper + tile_size
 
                     # Crop the tile and save it.
-                    tile = img.crop((left, upper, right, lower))
+                    tile = img_resized.crop((left, upper, right, lower))
                     tile_filename = f"tile_{i}_{j}.tif"
                     tile.save(tile_folder / tile_filename)
     except FileNotFoundError:
@@ -86,7 +90,7 @@ def invert_image(image: np.array) -> np.array:
     '''
     return np.invert(image)
 
-def find_brightest_spots(image: np.array, threshold: int = None, min_blob_size: int = 50, 
+def find_brightest_spots(image: np.array, threshold: int, min_blob_size: int = 50, 
                          use_adaptive_threshold: bool = True, max_stars: int = 5) -> Image.Image | list:
     '''
     Finds bright stars in the provided image and draws a circle around them. 
@@ -101,15 +105,6 @@ def find_brightest_spots(image: np.array, threshold: int = None, min_blob_size: 
         PIL Image with circles drawn at star locations, and a list of star center coordinates.
         List of the brightest stars coordinates.
     '''
-    # Determine the threshold.
-    if threshold is None:
-        if use_adaptive_threshold:
-            _, threshold = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        else:
-            mean = np.mean(image)
-            std = np.std(image)
-            threshold = mean + 2 * std  # mean + k * std
-
     # Create binary mask for bright pixels.
     binary_mask = image >= threshold
     binary_mask = binary_closing(binary_mask, structure=np.ones((3, 3)))
@@ -173,19 +168,19 @@ def prepare_fig(image1: np.array, image2: np.array, image3: np.array, image4:np.
         None
     '''
     fig, axes = plt.subplots(2, 2, figsize=(10, 10))
-    axes[0, 0].imshow(image1, cmap='gray', interpolation='none', origin='lower')
+    axes[0, 0].imshow(np.flipud((image1)), cmap='gray', interpolation='none', origin='lower')
     axes[0, 0].axis('off')
     axes[0, 0].set_title("Past Image")
 
-    axes[0, 1].imshow(image2, cmap='gray', interpolation='none', origin='lower')
+    axes[0, 1].imshow(np.flipud((image2)), cmap='gray', interpolation='none', origin='lower')
     axes[0, 1].axis('off')
     axes[0, 1].set_title("Recent Image")
 
-    axes[1, 0].imshow(image3, cmap='gray', interpolation='none', origin='lower')
+    axes[1, 0].imshow(np.flipud((image3)), cmap='gray', interpolation='none', origin='lower')
     axes[1, 0].axis('off')
     axes[1, 0].set_title("Past Image aligned with Recent Image")
 
-    axes[1, 1].imshow(image4, cmap='gray', interpolation='none', origin='lower')
+    axes[1, 1].imshow(np.flipud((image4)), cmap='gray', interpolation='none', origin='lower')
     axes[1, 1].axis('off')
     axes[1, 1].set_title("Footprint of the Transformation")
 
@@ -228,25 +223,25 @@ def create_diff_map(image1: np.array, image2: np.array, image3: np.array, tile_n
 
     # Plot norm_past.
     ax1 = fig.add_subplot(gs[0, 0])
-    ax1.imshow(image1, cmap='gray', interpolation='none', origin='lower')
+    ax1.imshow(np.flipud(image1), cmap='gray', interpolation='none', origin='lower')
     ax1.axis('off')
     ax1.set_title("Inverted and Normalized Past Image")
 
     # Plot norm_recent.
     ax2 = fig.add_subplot(gs[0, 1])
-    ax2.imshow(image2, cmap='gray', interpolation='none', origin='lower')
+    ax2.imshow(np.flipud(image2), cmap='gray', interpolation='none', origin='lower')
     ax2.axis('off')
     ax2.set_title("Inverted and Normalized Recent Image")
 
     # Plot transformed_past.
     ax3 = fig.add_subplot(gs[1, 0])
-    ax3.imshow(image3, cmap='gray', interpolation='none', origin='lower')
+    ax3.imshow(np.flipud(image3), cmap='gray', interpolation='none', origin='lower')
     ax3.axis('off')
     ax3.set_title("Transformed Past Image")
 
     # Plot difference map.
     ax4 = fig.add_subplot(gs[1, 1])
-    img = ax4.imshow(difference_map, cmap='inferno', vmin=0, vmax=difference_map.max(), origin='lower')
+    img = ax4.imshow(np.flipud(difference_map), cmap='inferno', vmin=0, vmax=difference_map.max(), origin='lower')
     ax4.axis('off')
     ax4.set_title("Difference Map (Transformed Past - Recent)")
 
