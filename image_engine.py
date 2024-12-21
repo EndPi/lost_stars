@@ -90,8 +90,7 @@ def invert_image(image: np.array) -> np.array:
     '''
     return np.invert(image)
 
-def find_brightest_spots(image: np.array, threshold: int, min_blob_size: int = 50, 
-                         use_adaptive_threshold: bool = True, max_stars: int = 5) -> Image.Image | list:
+def find_brightest_spots(image: np.array, threshold: int, min_blob_size: int = 50, max_stars: int = 5) -> Image.Image | list:
     '''
     Finds bright stars in the provided image and draws a circle around them. 
     Also returns their coordinates.
