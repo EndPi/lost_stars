@@ -156,7 +156,7 @@ def main() -> None:
         avg_diff_map = np.mean(maps, axis=0)
 
         #Prepare the fig
-        create_avg_diff_map(avg_diff_map=avg_diff_map, map_path=DIFF_MAP_PATH, tile_idx=tile_idx)
+        create_avg_diff_map(avg_diff_map=avg_diff_map, save_path=DIFF_MAP_PATH, tile_idx=tile_idx)
 
     print(f'INFO: Done!')
 

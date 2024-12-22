@@ -255,7 +255,16 @@ def create_diff_map(image1: np.array, image2: np.array, image3: np.array, tile_n
     plt.savefig(fig_path, bbox_inches='tight')
     plt.close(fig)
 
-def create_avg_diff_map(avg_diff_map: np.array, map_path: Path, tile_idx: int) -> None:
+def create_avg_diff_map(avg_diff_map: np.array, save_path: Path, tile_idx: int) -> None:
+    '''
+    Function to save an average difference map.
+    @Args:
+        avg_diff_map: The calculated average difference map.
+        save_map: Where to save the map to.
+        tile_idx: Index of the tile. Used for naming.ň
+    @Return:
+        None
+    '''
     # Create a figure and axis for the plot
     fig, ax = plt.subplots(figsize=(8, 8))
 
@@ -269,6 +278,6 @@ def create_avg_diff_map(avg_diff_map: np.array, map_path: Path, tile_idx: int) -
     cbar.set_label('Difference Intensity', rotation=270, labelpad=15)
 
     # Save the plot
-    avg_diff_map_path = map_path / f"tile_{tile_idx}_average.png"
+    avg_diff_map_path = save_path / f"tile_{tile_idx}_average.png"
     plt.savefig(avg_diff_map_path, bbox_inches='tight', dpi=300)
     plt.close(fig)
