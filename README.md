@@ -1,34 +1,34 @@
 # Lost Stars Project
 
-
-## Setup
-There are currently two python files, `main.py` and `image_engine.py`. The program runs by launching `main.py`, where the following arguments are neccessary/optional:
-```
-1. -p path | for specifying the path to past images. Mandatory.
-2. -r path | for specifying the path to recent images. Mandatory.
-3. -d      | for debug mode. Displays additional information. Optional.
-```
-Additionally, the program can be run by using a bash script, i.e. `./run.sh` for regular version and `./run_debug.sh` for the debug version. It is neccessary to adjust the path to the images within those files if you wish to use this way.
+The goal of this project was to determine and implement a possible solution to analysing the abnormal phenomenon named 'lost stars' in images of fields in the sky. The task was assigned as part of the [Space Engineering course](https://intranet.fel.cvut.cz/en/education/bk/predmety/47/49/p4749406.html) at [FEE CTU](https://fel.cvut.cz/en) in Prague. It was done in collaboration with [Sonneberg Observatory](https://www.astronomiemuseum.de/), Germany. This repository contains the full code, which is complemented by a PDF report.
 
 ## Workflow
-My personal suggestion of possible work-flow is the following. We take two folders of images, one with the past images (i.e. let's say 1930) and the other with the more recent images (e.g. 1970). We organise the images within the folders so that the corresponding images are at the same index, e.g. `folder_past/img_1` and `folder_recent/img_1` are the "same" picture, just the former is the older one and the latter is the younger one.
+Our program works on the following basis. We were given two sets of images of fields in the sky. One set is older (first third of 20th century) and the second set is more recent (late 20th century). We denote the relation between those sets, i.e. pair correspondence in a specific file, see `config.yaml` for an example configuration. 
 
-For each such pair, we find the transformation and subsequently apply the transformation, to let's say, the older picture, i.e. the past one. To do this, we will likely need to crop down the images into smaller tiles and figure out, how to determine the transformation of the whole picture. 
+Once the pairs are set correctly, we divide the original images into smaller tiles. The tile pairs are then analysed and a transformation is found between the past tile and the recent tile, to ensure there are no misalignments at play. 
 
-Once that's done, we can compare the pictures, since they should now be essentially of the same orientation etc., and create some sort of difference map. For instance, if the first picture contains a  huge star with brightness/pixel value of e.g. `255`, and the next picture contains just blank space (suggesting we found a lost star), i.e. the value is e.g. `20`, the difference map will contain the value `255-20`. In other words, it will contain white (or pretty much any other color) spots, where those spots will represent a location, where a significant difference occured. Something like [this](https://www.researchgate.net/publication/270216822/figure/fig1/AS:613883505045506@1523372641055/a-Difference-map-retrieved-from-image-differencing-b-Difference-map-retrieved-from.png).
+Once that is done, the absolute difference in pixel value is calculated and a so-called difference map is created. This map showcases the possible spots for a lost star candidate. The brighter a spot in the difference map is, the higher the chance. 
 
-Once we do this, we can possibly average the value of each pixel within the difference map throughout the whole set (i.e. not just from one pair), so that small fluctations or such dissappear. We can then look at the biggest spots in the difference map, that means most probable candidates, and let's say, project those areas to the original images and check manually/visually, whether it is indeed a lost star candidate or just a flaw in our program, image corruption etc. What I imagine is something like [this](https://i.sstatic.net/5NuyK.png).
+Finally, we average out the difference maps for all tiles, to minimase possible miscalculations or anomalies.
 
-## Possible Implementation
+## Setup
 
-```python
-1. get set of recent/past images
-2. reduce the size of images/preprocess/denoise*
-3. find transformation between each pair*
-4. apply transformation*
-5. create diff map*
-6. compare diff map with original set
+There are currently three python files. In `main.py`, the main logic is implemented. The image handling, calculations and operations are handled through `image_engine.py`. Last but not least, `utils.py` implements some minor functions.
+
+
+The program runs by launching `main.py` where the user is expected to provide the following arguments:
 ```
-Commands with * would be done performed within `image_engine.py`. 
+1. -p %path | for specifying the path to past images. Mandatory.
+2. -r %path | for specifying the path to recent images. Mandatory.
+3. -d       | for debug mode. Displays additional information. Optional.
+```
+The program can be run from the command line directly (provided the correct arguments) or by using a bash script, i.e. `./run.sh` for regular version and `./run_debug.sh` for the debug version. It is recommended to use this, however mind, that it is neccessary to adjust the path to the image sets within those files if you wish to use this way.
 
-[Link](https://mwcraig.github.io/ccd-as-book/01-05-Calibration-overview.html) to possible method of image processing/denoising.
+
+## Example Results
+Below are some of the examples of results achieved.
+
+![Average Difference Map Example](showcase_images/average_example.png)
+
+
+
