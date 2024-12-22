@@ -28,6 +28,10 @@ The program can be run from the command line directly (provided the correct argu
 ## Example Results
 Below are some of the examples of results achieved.
 
+![Transformation Example](showcase_images/transformation_example.png)
+
+![Difference Map Example](showcase_images/diff_map_example.png)
+
 ![Average Difference Map Example](showcase_images/average_example.png)
 
 
