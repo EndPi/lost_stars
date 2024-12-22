@@ -82,6 +82,10 @@ def main() -> None:
         if DEBUG:
             print(f'DEBUG: Config file read successfully!')
     print(f'INFO: Starting pair processing!')
+
+    # Store all difference maps.
+    tile_diff_maps = {}
+
     for i, pair in enumerate(image_pairs, start=1):
         print(f"INFO: Processing pair {i}...")
         past, recent = pair['past_image'], pair['recent_image']
@@ -104,12 +108,13 @@ def main() -> None:
             print(f'DEBUG: Folders for each pair transformation and difference map created successfully!')
 
         print(f'INFO: Determining transformations!')
-        for past_tile_path, recent_tile_path in zip(past_tiles, recent_tiles):
+        for tile_idx, (past_tile_path, recent_tile_path) in enumerate(zip(past_tiles, recent_tiles)):
             norm_past = invert_image(image=normalize_image(image_path=past_tile_path))
             norm_recent = invert_image(image=normalize_image(image_path=recent_tile_path))
             if DEBUG:
                 print(f'DEBUG: Images {norm_past} and {norm_recent} inverted!')
             
+            #Past spots and recent spots are images with circles drawn around stars
             past_spots, past_cords = find_brightest_spots((norm_past), 200)
             recent_spots, recent_cords = find_brightest_spots((norm_recent), 200)
 
@@ -134,7 +139,25 @@ def main() -> None:
             tile_name = Path(past_tile_path).stem  
             prepare_fig(image1=past_spots, image2=recent_spots, image3=transformed_past, image4=footprint, tile_name=tile_name,save_path=pair_folder_path)      
             create_diff_map(image1=norm_past, image2=norm_recent, image3=transformed_past, tile_name=tile_name, save_path=diff_map_path) 
-        
+
+            # Store the difference map for the current tile index
+            diff_map = np.abs(transformed_past - norm_recent)
+            if tile_idx not in tile_diff_maps:
+                tile_diff_maps[tile_idx] = []
+                if DEBUG:
+                    print(f'DEBUG: Difference map for {tile_idx} added!')
+            tile_diff_maps[tile_idx].append(diff_map)
+    
+    # Compute and save the average difference map for each tile
+    print(f'INFO: Computing average difference maps for each tile!')
+    for tile_idx, maps in tile_diff_maps.items():
+
+        # Compute the average difference map for the current tile index
+        avg_diff_map = np.mean(maps, axis=0)
+
+        #Prepare the fig
+        create_avg_diff_map(avg_diff_map=avg_diff_map, map_path=DIFF_MAP_PATH, tile_idx=tile_idx)
+
     print(f'INFO: Done!')
 
 
